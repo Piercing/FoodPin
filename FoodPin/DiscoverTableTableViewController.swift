@@ -24,6 +24,24 @@ class DiscoverTableTableViewController: UITableViewController {
     // entre paréntesis angulares.
     var imageCache = NSCache<CKRecordID, NSURL>()
     
+    var queryOperation = CKQueryOperation()
+    
+    //var totalResultLimit = 0
+    
+    var _totalResultLimit : Int = 5
+    
+    var totalResultLimit : Int {
+        get {
+            return _totalResultLimit
+        }
+        set (aNewValue) {
+            //I've contrived some condition on which this property can be set
+            if (aNewValue != _totalResultLimit) {
+                _totalResultLimit = aNewValue
+            }
+        }
+    }
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
@@ -39,6 +57,7 @@ class DiscoverTableTableViewController: UITableViewController {
         refreshControl?.backgroundColor = UIColor.white
         refreshControl?.tintColor = UIColor.gray
         refreshControl?.addTarget(self, action: #selector(fetchRecordsFromCloud), for: UIControlEvents.valueChanged)
+        
     }
     
     override func didReceiveMemoryWarning() {
@@ -134,13 +153,20 @@ class DiscoverTableTableViewController: UITableViewController {
         
         
         // Create the query operation with the query.
-        let queryOperation = CKQueryOperation(query: query)
+        queryOperation = CKQueryOperation(query: query)
         // Fields to search.
         queryOperation.desiredKeys = ["name"]
         // With high priorityo operation.
         queryOperation.queuePriority = .veryHigh
         // Maximun numbers of results.
-        queryOperation.resultsLimit =  50
+        
+        queryOperation.resultsLimit =  self.totalResultLimit
+        print("Result LIMIT: \(self.totalResultLimit)")
+        if self.refreshControl != nil {
+            self.totalResultLimit = self.totalResultLimit + 5
+            print("Result LIMIT: \(self.totalResultLimit)")
+        }
+        
         // Operation in background (No thread main).
         // This is execute every time a record returned & add to array.
         queryOperation.recordFetchedBlock = { (record) -> Void in
